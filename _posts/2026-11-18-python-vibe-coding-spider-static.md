@@ -259,17 +259,31 @@ Tipping the Velvet,£53.74,One,http://books.toscrape.com/catalogue/tipping-the-v
 - **编码推断**：`apparent_encoding` 基于内容猜测，多语言混排仍有误判可能
 - **合规边界**："2 秒间隔 + 受控页数"只是最低限度的礼貌策略，换成真实站点前需先看 `robots.txt` 与用户协议
 
-### 3. 静态方案与动态方案
+### 3. 静态方案与动态方案（进阶部分实测数据）
 
-| 维度 | requests + BeautifulSoup | Playwright / Selenium |
+指导书的进阶挑战是"抓一个动态渲染站点并比较两种方案"。目标换成 `quotes.toscrape.com/js/`，先用纯 `requests + BeautifulSoup` 取证：状态码 200、HTML 5806 字符、`div.quote` 数量 **0**、页面含 `var data`——静态解析在这种情况下不是"解析错了"，而是根本拿不到渲染后的 DOM。
+
+两条项目实际跑通的路线：
+
+| 维度 | 方案 B 内嵌数据反查 | 方案 A 无头浏览器渲染 |
 |---|---|---|
-| 适用页面 | 静态 HTML，数据在响应体里 | JS 渲染，数据由前端运行时生成 |
-| 实现复杂度 | 低，一个文件即可 | 高，浏览器安装、驱动版本、等待策略 |
-| 单页耗时 | 0.1–0.3 秒 | 1–3 秒 |
-| 内存占用 | 几十 MB | 数百 MB |
-| 维护成本 | 选择器一变即失效 | 同样依赖 DOM，还要维护等待与重试 |
+| 做法 | 定位页面 `var data = [...]`，用 `JSONDecoder.raw_decode()` 精确解析 | 启动无头浏览器执行 JS，等卡片出现后解析 DOM |
+| 2 页实测耗时 | **5.00 秒 / 20 条** | **19.96 秒 / 20 条** |
+| 额外依赖 | 无（仅已有的 requests + bs4） | `websocket-client` + 本机 Edge/Chrome |
+| 核心代码量 | 53 行 | 158 行（浏览器类 109 + 解析编排 49） |
+| 结果一致性 | 两方案逐行字段（作者/正文/标签/页码）**完全一致** | 同左 |
 
-判断顺序应该是：先用 `Ctrl+U` 看源码里有没有目标数据，或用 `requests` 抓一次看响应体是否含关键词。数据在初始 HTML 里就用静态方案，只在确认由 JS 生成时才升级自动化，不要一上来就上浏览器。
+耗时差约 4 倍、代码量差约 3 倍，拿到的数据却一模一样——这就是"先找数据源、最后才上浏览器"最直接的依据。
+
+浏览器方案的落地过程比原理麻烦得多，几个真实的坑：
+
+1. Selenium 4 的 `webdriver.Edge()` 抛 `NoSuchDriverException`，Selenium Manager 下载 `msedgedriver` 在本机就是下不动；
+2. Playwright 的轮子（约 40MB + 浏览器运行时）从镜像装了 5 分钟没装完，放弃；
+3. Edge 的 `--headless=old / --headless=new / --headless` 三种 `--dump-dom` 模式全部退出码 0、stdout 为空；
+4. 最后改用浏览器自带的 DevTools 协议（`--remote-debugging-port` + `websocket-client`），零驱动、零额外二进制，1.42 秒完成启动并渲染出 10 张卡片；
+5. 首次对比还因为第 1 页等 `div.quote` 25 秒超时失败（首访要等 DNS / TLS / 外部 JS），把超时放宽到 45 秒并对每页加一次重试才拿到干净结果。
+
+判断顺序仍然不变：先看响应体有没有目标数据，有就静态解析；确认数据是 JS 生成后，先找内嵌数组或 XHR 接口；只有数据在客户端被二次加工（加密签名、多接口拼接）时，才升级到浏览器渲染。
 
 ### 4. 待改进
 
@@ -284,7 +298,7 @@ Tipping the Velvet,£53.74,One,http://books.toscrape.com/catalogue/tipping-the-v
 ## 七、源码与文档
 
 - 源码仓库：[python-spider-lab](https://github.com/qls-eng/python-spider-lab)
-- 仓库内含：`fetcher.py`（`NewsCrawler` 类）、`result.csv`、`README.md`，以及 `docs/` 下的需求澄清清单、AI 协作过程记录（R1~R3 三段迭代 + R7 步骤 4 重构补做）、测试用例（含 TC-10 重构等价性回归）、复盘（含第七节重构补做说明）四份文档
+- 仓库内含：`fetcher.py`（`NewsCrawler` 类）、`dynamic_crawler.py`（进阶两方案，411 行）、`result.csv` / `quotes.csv`、`README.md`，以及 `docs/` 下的需求澄清清单、AI 协作过程记录（R1~R3 三轮迭代 + R7 步骤 4 重构 + R8 进阶挑战）、测试用例（TC-01~TC-17，含重构与两方案一致性回归）、复盘、进阶动态渲染方案对比共五份文档
 
 ### 一句话结论
 

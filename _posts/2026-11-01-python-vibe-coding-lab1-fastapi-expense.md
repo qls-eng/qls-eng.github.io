@@ -302,7 +302,7 @@ app = create_app()
 
 ## 三、pytest 测试用例 `tests/test_api.py`
 
-每个用例通过 `create_app(RecordStore())` 获得全新内存存储，用例之间互不影响。共 **13 个用例**，分为正常新增、边界 / 异常、查询筛选分页、区间汇总四组。
+每个用例通过 `create_app(RecordStore())` 获得全新内存存储，用例之间互不影响。共 **22 个用例**：前 13 个覆盖正常新增、边界 / 异常、查询筛选分页、区间汇总四组，后 9 个覆盖追补的分类聚合与 CSV 导出（本文节选前 13 个的写法，完整用例见仓库）。
 
 ```python
 import os
@@ -396,12 +396,44 @@ invalid query type status=422
 
 ```
 $ pytest tests/ -v
-collected 13 items
+collected 22 items
 ...
-======================== 13 passed, 1 warning in 1.50s ========================
+======================== 22 passed, 1 warning in 5.08s ========================
 ```
 
+其中前 13 个是实验主流程的用例，后 9 个是追补两个接口时新增的（见 4.1 节）。
+
 pytest 完整运行记录见仓库 `docs/images/pytest_output.txt`，真实接口调用记录见 `docs/images/live_api_check.txt`。
+
+### 4.1 实验后追补的两个接口（2026-11-18）
+
+交完作业后又补了两个接口，起因很朴素：汇总只有一个总收入 / 总支出，看不出钱花在哪一类；明细只能看、不能带走。两项都不在考题要求内，属于实验结束后的追加，这里如实标注。
+
+`GET /summary/by-category`：按 `(type, category)` 分组，给出每组总额、条数、占比。
+
+```json
+{"total_income": 7000.0, "total_expense": 135.5, "items": [
+  {"type":"income","category":"工资","total":5000.0,"count":1,"percent":71.43},
+  {"type":"income","category":"兼职","total":2000.0,"count":1,"percent":28.57},
+  {"type":"expense","category":"餐饮","total":115.5,"count":2,"percent":85.24},
+  {"type":"expense","category":"交通","total":20.0,"count":1,"percent":14.76}]}
+```
+
+`GET /records/export`：复用 `/records` 的筛选与校验，`utf-8-sig` 带 BOM（Excel 双击不乱码），响应头带 `X-Total-Records`，空结果也返回表头行。
+
+```
+content-type: text/csv; charset=utf-8 | X-Total-Records: 5 | attachment; filename="records.csv"
+BOM: b'\xef\xbb\xbf'  行数: 6（表头 + 5 条）
+首行: 1,5000.0,income,工资,2026-11-01
+```
+
+三个踩到的坑，恰好都不是"算法问题"而是"口径问题"：
+
+1. **排序不稳定**：只按金额降序时，同额分类的顺序取决于字典迭代，测试写不出强断言。改成"收入在前 → 金额降序 → 分类字典序"后变成可预期的契约。
+2. **占比分母含糊**：用全部收支总额做分母，`type=expense` 筛选后各分类占比加起来远不到 100%。改为分母取**同类型总额**，并在响应里回传 `total_income` / `total_expense` 让调用方可自校验。
+3. **CSV 编码**：`utf-8` 导出后 Excel 打开中文乱码，改 `utf-8-sig` 并在用例里断言首字节 `b'\xef\xbb\xbf'`。
+
+测试从 13 个补到 **22 个全部通过**（`22 passed, 1 warning in 5.08s`），新增覆盖分类分组与占比、`type` 筛选、空区间、起止颠倒 422、CSV 的 BOM / 表头 / 首行内容 / 筛选生效 / 空结果仅表头。
 
 ---
 
@@ -413,6 +445,7 @@ pytest 完整运行记录见仓库 `docs/images/pytest_output.txt`，真实接�
 | 第2轮 | 线程安全内存仓库 | 金额入库 `round(..., 2)`，分类入库前 `strip()` | ID 1、2、3 自增，筛选汇总正确 |
 | 第3轮 | FastAPI 路由 + 统一 422 处理器 | 补充 `GET /records` 的 `type` 取值校验，非法值直接 422 | 三接口正常，非法输入返回结构化错误 |
 | 第4轮 | pytest 测试用例 | `strip_whitespace` 在 pydantic v2 已弃用，改用 `field_validator` 清洗分类；补查询类型非法用例 | 13 passed |
+| 第5轮（追补） | 按分类汇总 + 导出 CSV | 固定聚合排序、占比改同类型分母、`/summary` 补起止颠倒校验、CSV 改 `utf-8-sig`、空结果输出表头 | 22 passed |
 
 **踩坑记录**：
 
@@ -434,7 +467,7 @@ pydantic 数据模型、内存仓库骨架、FastAPI 路由与错误处理器、
 - 存储选型：在内存与 SQLite 之间选择内存列表 + 线程锁，课堂练习无需落盘、测试隔离简单。
 - 接口字段使用英文 `amount / type / category / date`，类型取值 `income / expense`，错误提示用中文。
 - 每个用例使用全新存储，保证测试隔离。
-- 在题目"正常 + 至少 2 个边界 / 异常"基础上补齐到 13 个用例。
+- 在题目"正常 + 至少 2 个边界 / 异常"基础上补齐到 13 个用例（追补两个接口后为 22 个）。
 
 ### 人工风险审查
 
@@ -447,7 +480,7 @@ pydantic 数据模型、内存仓库骨架、FastAPI 路由与错误处理器、
 ### 可改进
 
 - 把内存存储抽象成接口，后续切换 SQLite 时路由层不用改动。
-- 为汇总接口补充日期区间倒置（`start_date` 晚于 `end_date`）的校验与提示。
+- ~~为汇总接口补充日期区间倒置（`start_date` 晚于 `end_date`）的校验与提示。~~（追补时已实现，统一返回结构化 422）
 - 增加多线程并发写入压测用例，直接验证 ID 不重复。
 
 ---
@@ -456,10 +489,10 @@ pydantic 数据模型、内存仓库骨架、FastAPI 路由与错误处理器、
 > ```
 > fastapi-expense-tracker-lab1/
 > ├── src/
-> │   ├── main.py            # FastAPI 应用、路由、统一 422 处理
-> │   ├── schemas.py         # pydantic 请求 / 响应模型
-> │   └── store.py           # 线程安全内存仓库
-> ├── tests/test_api.py      # 13 个 pytest 用例
+> │   ├── main.py            # FastAPI 应用、路由、统一 422 处理、CSV 导出
+> │   ├── schemas.py         # pydantic 请求 / 响应模型（含 CategoryStat）
+> │   └── store.py           # 线程安全内存仓库（含按分类聚合）
+> ├── tests/test_api.py      # 22 个 pytest 用例
 > ├── docs/                  # 需求澄清、AI 对话记录、复盘、运行记录
 > ├── requirements.txt
 > └── README.md
