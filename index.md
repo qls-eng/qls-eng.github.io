@@ -19,7 +19,7 @@ layout: default
   - 在线演示：[校园地图与天气数据看板](https://campusdashboardmap-2fkcmvsprdpzxxvjumj7uy.streamlit.app/)
 - [Python 实验（三）：列表、元组、集合深度探究](./2026/11/05/python-lab3-list-tuple-set.html)
   - 源码仓库：[python-lab3-containers](https://github.com/qls-study-blog/python-lab3-containers)
-- [Vibe Coding 实操：静态网页爬虫（请求—解析—持久化三段迭代）](./2026/11/18/python-vibe-coding-spider-static.html)
+- [Vibe Coding 实操：静态网页爬虫（请求—解析—持久化—重构四轮迭代）](./2026/11/18/python-vibe-coding-spider-static.html)
   - 源码仓库：[python-spider-lab](https://github.com/qls-study-blog/python-spider-lab)
 - [Python 实验（四）：本地文档智能审查与摘要（Vibe Coding 全流程）](./2026/11/18/local-doc-review-agent.html)
   - 源码仓库：[local-doc-review-lab](https://github.com/qls-study-blog/local-doc-review-lab)

@@ -1,14 +1,14 @@
 ---
 layout: default
-title: Vibe Coding 实操：静态网页爬虫（请求—解析—持久化三段迭代）
+title: Vibe Coding 实操：静态网页爬虫（请求—解析—持久化—重构四轮迭代）
 date: 2026-11-18
 categories: 实验内容
 tags: [Python, 爬虫, requests, BeautifulSoup, pandas, Vibe Coding]
 ---
 
-# Vibe Coding 实操：静态网页爬虫（请求—解析—持久化三段迭代）
+# Vibe Coding 实操：静态网页爬虫（请求—解析—持久化—重构四轮迭代）
 
-> 本文按《Vibe Coding 爬虫开发实验》完成一个静态网页爬虫：用结构化 Prompt 驱动 AI 分三阶段产出代码，每阶段独立运行验证后再迭代，全程没有一次性生成完整爬虫。完整工程与过程记录见文末源码仓库。
+> 本文按《Vibe Coding 爬虫开发实验》完成一个静态网页爬虫：用结构化 Prompt 驱动 AI 分阶段产出代码，每阶段独立运行验证后再迭代，全程没有一次性生成完整爬虫；最后按指导书步骤 4 把整份代码喂回 AI 做审查并重构成类。完整工程与过程记录见文末源码仓库。
 
 ## 实验背景
 
@@ -58,7 +58,7 @@ tags: [Python, 爬虫, requests, BeautifulSoup, pandas, Vibe Coding]
 
 ---
 
-## 二、三段迭代过程
+## 二、前三轮的迭代过程（请求 → 解析 → 持久化）
 
 ### 阶段一：只请求，不解析
 
@@ -80,7 +80,7 @@ def _throttle():
 
 这一轮**实际跑挂了**：代码里直接用 `HTTPError`、`RequestException`，但没有从 `requests.exceptions` 导入，PyCharm 直接标红，运行必抛 `NameError`。追加一条"只补导入、不要新增功能"的 Prompt 修复后，5 页全部返回 `status=200`，请求层通过。
 
-> 这是三段迭代里唯一一次返工，也是最有价值的一次：AI 给的代码"看起来完整"，但连导入都没自查。
+> 这是主链路三轮迭代里唯一一次返工，也是最有价值的一次：AI 给的代码"看起来完整"，但连导入都没自查。而且这个坑并没有被真正修掉——下面第三节的审查会指出它一直留着。
 
 ### 阶段二：加解析，只打印前 3 条
 
@@ -128,7 +128,80 @@ df.to_csv("result.csv", index=False, encoding="utf-8-sig")
 
 ---
 
-## 三、运行结果
+## 三、步骤 4：把整份代码喂回 AI 做重构（实验后补做）
+
+指导书还有一步：把 AI 生成的全部代码再喂回 AI，让它指出潜在的性能瓶颈或安全隐患，重构为面向对象的类结构（如 `NewsCrawler` 类），并保持功能不变。
+
+前三轮完成的是请求、解析、持久化主链路，**这一步在实验进行时并没有做**。补做时有个绕不开的问题：如果直接把代码改掉、再补一句"我重构过"，`docs/ai对话记录.md` 里的三轮记录就和代码、提交时间线对不上了——等于自己证明自己造假。所以这一轮作为**新的第四轮（R7）如实追加**，日期写 2026-11-18，开头明确标注"该步骤在实验进行时未执行，本轮为实验后补做"，前三轮内容一个字没动；git 提交信息也写成"补做步骤 4：重构为 NewsCrawler 类"。
+
+### 1. 喂回去的 Prompt
+
+```
+请审查当前 fetcher.py，指出潜在的性能瓶颈或安全隐患，
+并把全部代码重构为面向对象的类结构（类名 NewsCrawler），保持功能不变。
+
+约束：
+1. 不改抓取字段、不改 CSV 列顺序与编码、不改控制台打印内容；
+2. 请求间隔 ≥2 秒、UA 池、超时重试 3 次的策略原样保留；
+3. 重构后必须能跑出与重构前逐行一致的 result.csv。
+
+验收：同一站点、同一页数运行，CSV 逐行比对一致。
+```
+
+### 2. AI 审查出来的五个问题
+
+| 类别 | 问题 | 给出的建议 |
+|---|---|---|
+| 性能 | 每页重建 `Session` 的写法，TCP 连接无法稳定复用 | 用上下文管理持有连接池 |
+| 隐患 | 模块级全局变量 `_last_request_at` 由 `global` 维护，多实例会互相串扰 | 收进实例属性，节流状态跟随实例 |
+| 隐患 | `HTTPError`、`RequestException` 依赖隐式引用（阶段一正是因此抛 `NameError`） | 显式 `from requests.exceptions import ...` |
+| 健壮性 | 页面级失败只打日志，没有统一汇总 | 由 `run()` 统一编排，失败页明确跳过 |
+| 可读性 | 五个函数 + 主流程平铺，职责边界不清晰 | 按会话 / 请求 / 解析 / 持久化 / 编排分层 |
+
+第二条和第三条值得单独记一笔：导入问题是阶段一**真实跑挂过**的那个坑，这说明同类问题不会因为多迭代几轮就自动消失，只要没人回头审查，它就一直躺在代码里。
+
+### 3. 重构后的结构
+
+整份代码收敛成一个 `NewsCrawler` 类，五个层次：
+
+| 层次 | 成员 | 职责 |
+|---|---|---|
+| 会话层 | `__enter__` / `__exit__` / `close` / `_create_session` / `session` | 持有并复用 Session，退出即关闭连接池 |
+| 请求层 | `_throttle` / `fetch_html` / `fetch_list_pages` | 节流、UA 伪装、超时重试、编码兜底、分页 |
+| 解析层 | `parse_books`（静态方法） | 列表页四字段抽取 |
+| 持久化层 | `save_csv` | 汇总写入 `utf-8-sig` 的 CSV |
+| 编排层 | `run` | 串起抓取、打印预览、落盘、统计 |
+
+模块级常量全部变成构造参数，命令行补上 `--pages` 与 `--out`：
+
+```python
+with NewsCrawler(max_pages=3, request_interval=2.0, output_csv="result.csv") as crawler:
+    crawler.run()
+```
+
+### 4. 怎么证明"功能真的没变"
+
+不靠感觉，靠产物比对。重构前先把 `result.csv` 备份一份，重构后用同样参数 `--pages 3` 重跑，再用 `csv` 模块逐行读两份文件比较：
+
+```
+共抓取图书：60 条
+已写入 result.csv（utf-8-sig），共 60 行
+
+before rows: 61 | after rows: 61
+identical: True
+```
+
+61 行（表头 + 60 条数据）、每行每个字段全等。更直接的旁证是：提交后 `git status` 里 `result.csv` 根本没有出现改动，说明重构版生成的文件连字节都没变。
+
+异常路径也重跑了一遍：无效域名仍然重试 3 次、退避 2 秒→4 秒、最后返回 `None`，日志文案与重构前一致，重试语义没被这次重构碰坏。
+
+### 5. 重构中冒出来的新问题
+
+`run()` 的 `finally` 里关闭了会话，`with` 退出时 `__exit__` 又关一次——重复关闭。`close()` 做了幂等处理（关闭后把 `_session` 置 `None`），所以不报错，但这是设计冗余。这类问题单元测试根本测不出来，只有把整条调用路径读一遍才会看见。
+
+---
+
+## 四、运行结果
 
 ```
 [INFO] 请求成功 [1/3] http://books.toscrape.com/catalogue/page-1.html (status=200, len=51400)
@@ -153,7 +226,7 @@ Tipping the Velvet,£53.74,One,http://books.toscrape.com/catalogue/tipping-the-v
 
 ---
 
-## 四、异常场景实测
+## 五、异常场景实测
 
 不只跑通顺流程，把异常也真跑了一遍：
 
@@ -169,7 +242,7 @@ Tipping the Velvet,£53.74,One,http://books.toscrape.com/catalogue/tipping-the-v
 
 ---
 
-## 五、复盘
+## 六、复盘
 
 ### 1. 人工审查抓到的问题
 
@@ -177,6 +250,7 @@ Tipping the Velvet,£53.74,One,http://books.toscrape.com/catalogue/tipping-the-v
 2. UA 随机池对同一会话的指纹并不稳定，但对练习站点无实际副作用，保留
 3. 价格带 `£`、星级是英文单词，本阶段按原始数据留存，未清洗
 4. 解析失败返回空列表、不抛异常 —— 会造成"抓取 0 条也像正常结束"的**静默失败**，目前靠"每页条数 + 总条数"两处输出人工发现
+5. 步骤 4 补做时才发现：阶段一的导入坑一直没被彻底消除，重构时才算真正修干净
 
 ### 2. 风险识别
 
@@ -207,10 +281,10 @@ Tipping the Velvet,£53.74,One,http://books.toscrape.com/catalogue/tipping-the-v
 
 ---
 
-## 六、源码与文档
+## 七、源码与文档
 
 - 源码仓库：[python-spider-lab](https://github.com/qls-study-blog/python-spider-lab)
-- 仓库内含：`fetcher.py`、`result.csv`、`README.md`，以及 `docs/` 下的需求澄清清单、AI 协作过程记录、测试用例、复盘四份文档
+- 仓库内含：`fetcher.py`（`NewsCrawler` 类）、`result.csv`、`README.md`，以及 `docs/` 下的需求澄清清单、AI 协作过程记录（R1~R3 三段迭代 + R7 步骤 4 重构补做）、测试用例（含 TC-10 重构等价性回归）、复盘（含第七节重构补做说明）四份文档
 
 ### 一句话结论
 
