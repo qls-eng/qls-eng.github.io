@@ -21,12 +21,14 @@ layout: default
   - 源码仓库：[python-lab3-containers](https://github.com/qls-study-blog/python-lab3-containers)
 - [Vibe Coding 实操：静态网页爬虫（请求—解析—持久化三段迭代）](./2026/11/18/python-vibe-coding-spider-static.html)
   - 源码仓库：[python-spider-lab](https://github.com/qls-study-blog/python-spider-lab)
+- [Python 实验（四）：本地文档智能审查与摘要（Vibe Coding 全流程）](./2026/11/18/local-doc-review-agent.html)
+  - 源码仓库：[local-doc-review-lab](https://github.com/qls-study-blog/local-doc-review-lab)
 
 ## 📝 课堂日常作业
 
 课堂作业统一放在一个合集仓库中，按章节与主题归档。
 
-- [课堂日常作业：函数、递归与蒙特卡罗（第 5 章）](./2026/11/01/python-class-homework.html)
+- [课堂日常作业：函数、递归与组合数据（第 5~6 章）](./2026/11/01/python-class-homework.html)
   - 作业合集仓库：[python-homework](https://github.com/qls-study-blog/python-homework)
 
 ## 仓库结构
@@ -39,6 +41,7 @@ layout: default
 | 实验项目 | [campus_dashboard_map](https://github.com/qls-study-blog/campus_dashboard_map) | Lab2 校园地图天气看板 |
 | 实验项目 | [python-lab3-containers](https://github.com/qls-study-blog/python-lab3-containers) | 实验三 列表元组集合 |
 | 实验项目 | [python-spider-lab](https://github.com/qls-study-blog/python-spider-lab) | Vibe Coding 静态网页爬虫 |
+| 实验项目 | [local-doc-review-lab](https://github.com/qls-study-blog/local-doc-review-lab) | 实验四 本地文档智能审查与摘要 |
 | 课堂作业 | [python-homework](https://github.com/qls-study-blog/python-homework) | 全部课堂日常作业合集 |
 
 ## 关于
