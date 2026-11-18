@@ -50,21 +50,26 @@ tags: [Vibe Coding, Python, Streamlit, Folium, 数据看板, 高德地图]
 ## 项目结构
 
 ```
-campus_dashboard/
-├── app.py                  # 主入口：页面布局与交互逻辑
-├── config.py               # API密钥与配置
+campus_dashboard_map/
+├── app.py                       # 主入口：页面布局、状态管理与交互
+├── config.py                    # 密钥读取（secrets / 环境变量）+ 配色常量
 ├── data/
-│   ├── weather.py          # 和风天气API数据获取
-│   ├── campus.py           # 校园建筑/站点坐标数据
-│   └── mock.py             # 模拟数据 + 高德路径规划调用
-└── charts/
-    ├── map_view.py         # Folium地图渲染
-    ├── analytics.py        # 柱状图/折线图/饼图/表格
-    ├── bar_chart.py        # 人流量排行
-    ├── line_chart.py       # 温度降水趋势
-    ├── pie_chart.py        # 人群活动结构
-    └── table_view.py       # 建筑明细表格
+│   ├── campus_flow_raw.csv      # 原始模拟数据（47 行，含 13 条注入脏数据）
+│   ├── campus_flow_clean.csv    # 清洗后数据（34 行，全站唯一数据源）
+│   ├── campus_flow_hourly.csv   # 分时数据（48 行，2 天 × 24 小时）
+│   ├── preprocess.py            # 清洗、去重、越界处理、指标计算
+│   ├── mock.py                  # 建筑坐标、公交站点、观光车/通勤车点位
+│   └── weather.py               # 和风天气接口 + 正则清洗 + 失败降级
+├── charts/
+│   ├── map_view.py              # Folium 地图与线路/点位渲染
+│   └── analytics.py             # 全部图表：柱、条形、饼、折线、仪表盘、分时曲线、明细表
+├── tools/
+│   └── generate_flow_dataset.py # 数据生成（容量反算 + 固定种子，可完整复现）
+├── docs/                        # 需求设计、实验报告、测试用例、复盘、AI 对话记录
+└── requirements.txt
 ```
+
+> 说明：最初规划里图表是拆成 `bar_chart.py` / `line_chart.py` / `pie_chart.py` / `table_view.py` 四个独立文件的，后来发现它们都只是"取数 + 调 Plotly"两行逻辑，拆开反而增加 import 与状态传递成本，于是全部合并进 `charts/analytics.py`，按函数划分（`render_type_bar` / `render_rank_bar` / `render_pie_chart` / `render_line_chart` / `render_gauge` / `render_hourly_line` / `render_table`）。
 
 ---
 
@@ -227,7 +232,7 @@ streamlit run app.py
 | 数据准备与预处理 | 没有数据文件，没有清洗脚本，图表直接用 `np.random` 现造 |
 | 看板成品截图 | 没有 |
 | 实验报告 | 没有 |
-| 上传博客 | 就是本文（但文章里的项目结构还是旧的） |
+| 上传博客 | 就是本文（初版结构与最终代码有出入，已在第一节"项目结构"更新为最终版本） |
 
 更关键的是**数据不同源**：指标卡的"总人流量"、柱图各柱之和、表格里的数字，三处各自调 `mock.get_campus_data()` 造随机数，刷新一次就全变，直接违反任务 5「结果验证」要求的数据准确性。
 
