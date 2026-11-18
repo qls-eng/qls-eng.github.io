@@ -283,7 +283,7 @@ Tipping the Velvet,£53.74,One,http://books.toscrape.com/catalogue/tipping-the-v
 
 ## 七、源码与文档
 
-- 源码仓库：[python-spider-lab](https://github.com/qls-study-blog/python-spider-lab)
+- 源码仓库：[python-spider-lab](https://github.com/qls-eng/python-spider-lab)
 - 仓库内含：`fetcher.py`（`NewsCrawler` 类）、`result.csv`、`README.md`，以及 `docs/` 下的需求澄清清单、AI 协作过程记录（R1~R3 三段迭代 + R7 步骤 4 重构补做）、测试用例（含 TC-10 重构等价性回归）、复盘（含第七节重构补做说明）四份文档
 
 ### 一句话结论

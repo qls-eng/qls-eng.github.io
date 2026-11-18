@@ -197,8 +197,8 @@ IDE 侧踩坑小结：
 
 完整工程（含 `stopwords.txt`、`user_dict.txt`、样本文档、词云、报表、PyCharm 截图，以及逐轮 Prompt 与报错原文）：
 
-- 源码仓库：[**local-doc-review-lab**](https://github.com/qls-study-blog/local-doc-review-lab)
-- 协作痕迹：[vibe_coding_log.md](https://github.com/qls-study-blog/local-doc-review-lab/blob/main/vibe_coding_log.md)
+- 源码仓库：[**local-doc-review-lab**](https://github.com/qls-eng/local-doc-review-lab)
+- 协作痕迹：[vibe_coding_log.md](https://github.com/qls-eng/local-doc-review-lab/blob/main/vibe_coding_log.md)
 
 ```
 local-doc-review-lab/

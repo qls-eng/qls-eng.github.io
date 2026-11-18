@@ -443,6 +443,6 @@ OK
 
 本实验独立成一个项目仓库，完整代码、测试与实验报告见：
 
-👉 [**python-lab3-containers**（GitHub 源码）](https://github.com/qls-study-blog/python-lab3-containers)
+👉 [**python-lab3-containers**（GitHub 源码）](https://github.com/qls-eng/python-lab3-containers)
 
 > 说明：博客只记录文章与结论，完整工程代码统一放在独立的实验项目仓库中。

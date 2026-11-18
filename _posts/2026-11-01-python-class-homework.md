@@ -8,19 +8,19 @@ tags: [Python, 函数, 递归, turtle, 科赫雪花, 蒙特卡罗, 集合, jieba
 
 # 课堂日常作业：函数、递归与组合数据（第 5~6 章）
 
-> 本文汇总本阶段 Python 课堂日常作业。课堂作业统一存放在独立仓库 [**python-homework**](https://github.com/qls-study-blog/python-homework)，与各实验项目仓库分开管理；博客只做题目说明、思路讲解与源码索引。
+> 本文汇总本阶段 Python 课堂日常作业。课堂作业统一存放在独立仓库 [**python-homework**](https://github.com/qls-eng/python-homework)，与各实验项目仓库分开管理；博客只做题目说明、思路讲解与源码索引。
 
 ## 作业清单
 
 | 序号 | 题目 | 知识点 | 源码 |
 |------|------|--------|------|
-| 1 | `if __name__ == '__main__':` 的含义，why? | 模块入口、直接运行与导入的区别 | [笔记](https://github.com/qls-study-blog/python-homework/blob/main/notes/if_name_main.md) |
-| 2 | P196 习题 5.1 字符田字格绘制 | 自定义函数、参数控制、循环嵌套 | [5.1_tianzige.py](https://github.com/qls-study-blog/python-homework/blob/main/ch5_function/5.1_tianzige.py) |
-| 3 | 绘制科赫雪花，根据阶数生成（0~4 阶） | 递归函数、turtle 绘图 | [koch_snowflake.py](https://github.com/qls-study-blog/python-homework/blob/main/ch5_function/koch_snowflake.py) |
-| 4 | 蒙特卡罗方法手搓图形 | 随机数、概率估算 π、turtle 散点 | [monte_carlo.py](https://github.com/qls-study-blog/python-homework/blob/main/ch5_function/monte_carlo.py) |
-| 5 | 孤独的古诗词（P205 代码 6A） | 字符串处理、集合去重、`len(s) == len(set(s))` | [poem_solo.py](https://github.com/qls-study-blog/python-homework/blob/main/ch6_collection/poem_solo.py) |
-| 6 | 统计"十五五"规划报告热词并生成词云 | jieba 分词、词频统计、wordcloud、中文字体 | [report_wordcloud.py](https://github.com/qls-study-blog/python-homework/blob/main/ch6_collection/report_wordcloud.py) |
-| 7 | 自动轨迹绘制 | 指令数据解析、参数校验、turtle 转向与颜色 | [trace_draw.py](https://github.com/qls-study-blog/python-homework/blob/main/ch6_collection/trace_draw.py) |
+| 1 | `if __name__ == '__main__':` 的含义，why? | 模块入口、直接运行与导入的区别 | [笔记](https://github.com/qls-eng/python-homework/blob/main/notes/if_name_main.md) |
+| 2 | P196 习题 5.1 字符田字格绘制 | 自定义函数、参数控制、循环嵌套 | [5.1_tianzige.py](https://github.com/qls-eng/python-homework/blob/main/ch5_function/5.1_tianzige.py) |
+| 3 | 绘制科赫雪花，根据阶数生成（0~4 阶） | 递归函数、turtle 绘图 | [koch_snowflake.py](https://github.com/qls-eng/python-homework/blob/main/ch5_function/koch_snowflake.py) |
+| 4 | 蒙特卡罗方法手搓图形 | 随机数、概率估算 π、turtle 散点 | [monte_carlo.py](https://github.com/qls-eng/python-homework/blob/main/ch5_function/monte_carlo.py) |
+| 5 | 孤独的古诗词（P205 代码 6A） | 字符串处理、集合去重、`len(s) == len(set(s))` | [poem_solo.py](https://github.com/qls-eng/python-homework/blob/main/ch6_collection/poem_solo.py) |
+| 6 | 统计"十五五"规划报告热词并生成词云 | jieba 分词、词频统计、wordcloud、中文字体 | [report_wordcloud.py](https://github.com/qls-eng/python-homework/blob/main/ch6_collection/report_wordcloud.py) |
+| 7 | 自动轨迹绘制 | 指令数据解析、参数校验、turtle 转向与颜色 | [trace_draw.py](https://github.com/qls-eng/python-homework/blob/main/ch6_collection/trace_draw.py) |
 
 ---
 
@@ -39,7 +39,7 @@ tags: [Python, 函数, 递归, turtle, 科赫雪花, 蒙特卡罗, 集合, jieba
 
 因此这行判断的作用是：**只有当前文件被直接运行时，才执行下面缩进的入口代码；被导入时不执行**。这样模块既能独立运行做自测，又能被其他程序干净地复用函数定义，而不会在导入时自动执行测试或启动代码。
 
-完整讲解与示例见仓库笔记：[`notes/if_name_main.md`](https://github.com/qls-study-blog/python-homework/blob/main/notes/if_name_main.md)。
+完整讲解与示例见仓库笔记：[`notes/if_name_main.md`](https://github.com/qls-eng/python-homework/blob/main/notes/if_name_main.md)。
 
 ---
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 +----+----+
 ```
 
-完整源码：[`ch5_function/5.1_tianzige.py`](https://github.com/qls-study-blog/python-homework/blob/main/ch5_function/5.1_tianzige.py)。
+完整源码：[`ch5_function/5.1_tianzige.py`](https://github.com/qls-eng/python-homework/blob/main/ch5_function/5.1_tianzige.py)。
 
 ---
 
@@ -143,7 +143,7 @@ def koch_snowflake(t, depth: int, length: float = 320) -> None:
 
 运行后输入阶数（0~4）即可弹出 turtle 窗口绘制；阶数越高，雪花轮廓越细碎。
 
-完整源码：[`ch5_function/koch_snowflake.py`](https://github.com/qls-study-blog/python-homework/blob/main/ch5_function/koch_snowflake.py)。
+完整源码：[`ch5_function/koch_snowflake.py`](https://github.com/qls-eng/python-homework/blob/main/ch5_function/koch_snowflake.py)。
 
 ---
 
@@ -183,7 +183,7 @@ def monte_carlo_pi(t, n_points: int, scale: int = 200) -> float:
     return 4 * inside / n_points
 ```
 
-投点数量越大，估算值越接近 π（例如 5 万点时约为 3.13 左右）。完整源码：[`ch5_function/monte_carlo.py`](https://github.com/qls-study-blog/python-homework/blob/main/ch5_function/monte_carlo.py)。
+投点数量越大，估算值越接近 π（例如 5 万点时约为 3.13 左右）。完整源码：[`ch5_function/monte_carlo.py`](https://github.com/qls-eng/python-homework/blob/main/ch5_function/monte_carlo.py)。
 
 ---
 
@@ -215,7 +215,7 @@ def is_lonely_poem(text: str) -> bool:
 
 三首都是五言绝句（20 字），差别就在那一个字：`处` 和 `人` 各重复一次，判定立刻翻转。这也回应了思考练习 6.3：换一首诗，输出的两个数字随之变化，只要出现任意一个重复汉字，两个数字就不相等。
 
-完整源码：[`ch6_collection/poem_solo.py`](https://github.com/qls-study-blog/python-homework/blob/main/ch6_collection/poem_solo.py)。
+完整源码：[`ch6_collection/poem_solo.py`](https://github.com/qls-eng/python-homework/blob/main/ch6_collection/poem_solo.py)。
 
 ---
 
@@ -259,7 +259,7 @@ for word in CUSTOM_WORDS:
 
 `WordCloud(font_path=...)` 只作用于词云内部文字；如果还要用 matplotlib 画标题或坐标轴，需要另设 `plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']`。只设一个，汉字就会变方框。这和[实验四](https://qls-eng.github.io/qls-study-blog.github.io/2026/11/18/local-doc-review-agent.html)遇到的是同一个坑。
 
-完整源码：[`ch6_collection/report_wordcloud.py`](https://github.com/qls-study-blog/python-homework/blob/main/ch6_collection/report_wordcloud.py)。
+完整源码：[`ch6_collection/report_wordcloud.py`](https://github.com/qls-eng/python-homework/blob/main/ch6_collection/report_wordcloud.py)。
 
 ---
 
@@ -299,13 +299,13 @@ for record in records:
 
 校验失败直接打印行号并退出，不会带着脏数据去绘图。另外提供 `--no-gui` 参数，只解析并打印每条指令，方便在无图形环境（比如服务器）自测。
 
-完整源码：[`ch6_collection/trace_draw.py`](https://github.com/qls-study-blog/python-homework/blob/main/ch6_collection/trace_draw.py)。
+完整源码：[`ch6_collection/trace_draw.py`](https://github.com/qls-eng/python-homework/blob/main/ch6_collection/trace_draw.py)。
 
 ---
 
 ## 运行方式
 
-仓库：[**python-homework**](https://github.com/qls-study-blog/python-homework)。第 2~5、7 题仅依赖 Python 标准库（`turtle`、`random`、`re`、`argparse`）；第 6 题需要 `jieba`、`wordcloud`、`matplotlib`。
+仓库：[**python-homework**](https://github.com/qls-eng/python-homework)。第 2~5、7 题仅依赖 Python 标准库（`turtle`、`random`、`re`、`argparse`）；第 6 题需要 `jieba`、`wordcloud`、`matplotlib`。
 
 ```bash
 pip install -r requirements.txt          # 仅第 6 题需要

@@ -469,6 +469,6 @@ pydantic 数据模型、内存仓库骨架、FastAPI 路由与错误处理器、
 
 本实验独立成一个项目仓库，完整代码、测试与过程文档见：
 
-👉 [**fastapi-expense-tracker-lab1**（GitHub 源码）](https://github.com/qls-study-blog/fastapi-expense-tracker-lab1)
+👉 [**fastapi-expense-tracker-lab1**（GitHub 源码）](https://github.com/qls-eng/fastapi-expense-tracker-lab1)
 
 > 说明：博客仓库只记录文章与说明，完整工程代码统一放在独立的实验项目仓库中。
