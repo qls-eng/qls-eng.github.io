@@ -35,7 +35,7 @@ layout: default
 
 | 类型 | 仓库 | 说明 |
 |------|------|------|
-| 博客 | [qls-study-blog.github.io](https://github.com/qls-eng/qls-study-blog.github.io) | 只存放文章、截图与博客配置 |
+| 博客 | [qls-eng.github.io](https://github.com/qls-eng/qls-eng.github.io) | 只存放文章、截图与博客配置（站点即 https://qls-eng.github.io/ ） |
 | 实验项目 | [excel-report-lab1](https://github.com/qls-eng/excel-report-lab1) | Lab1 Excel 报表脚本 |
 | 实验项目 | [fastapi-expense-tracker-lab1](https://github.com/qls-eng/fastapi-expense-tracker-lab1) | Lab1 FastAPI 记账接口 |
 | 实验项目 | [campus_dashboard_map](https://github.com/qls-eng/campus_dashboard_map) | Lab2 校园地图天气看板 |
