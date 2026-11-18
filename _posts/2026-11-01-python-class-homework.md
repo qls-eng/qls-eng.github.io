@@ -257,7 +257,7 @@ for word in CUSTOM_WORDS:
 
 **（2）中文字体有两个通道**
 
-`WordCloud(font_path=...)` 只作用于词云内部文字；如果还要用 matplotlib 画标题或坐标轴，需要另设 `plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']`。只设一个，汉字就会变方框。这和[实验四](https://qls-study-blog.github.io/2026/11/18/local-doc-review-agent.html)遇到的是同一个坑。
+`WordCloud(font_path=...)` 只作用于词云内部文字；如果还要用 matplotlib 画标题或坐标轴，需要另设 `plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']`。只设一个，汉字就会变方框。这和[实验四](https://qls-eng.github.io/qls-study-blog.github.io/2026/11/18/local-doc-review-agent.html)遇到的是同一个坑。
 
 完整源码：[`ch6_collection/report_wordcloud.py`](https://github.com/qls-study-blog/python-homework/blob/main/ch6_collection/report_wordcloud.py)。
 
