@@ -1,0 +1,217 @@
+---
+layout: default
+title: Vibe Coding 实操：静态网页爬虫（请求—解析—持久化三段迭代）
+date: 2026-11-18
+categories: 实验内容
+tags: [Python, 爬虫, requests, BeautifulSoup, pandas, Vibe Coding]
+---
+
+# Vibe Coding 实操：静态网页爬虫（请求—解析—持久化三段迭代）
+
+> 本文按《Vibe Coding 爬虫开发实验》完成一个静态网页爬虫：用结构化 Prompt 驱动 AI 分三阶段产出代码，每阶段独立运行验证后再迭代，全程没有一次性生成完整爬虫。完整工程与过程记录见文末源码仓库。
+
+## 实验背景
+
+这类实验的评分点不在"最终能不能跑出一个 CSV"，而在**开发过程是否可追溯**：需求有没有讲清楚、任务有没有拆开、每段代码有没有验证、出错后怎么定位。一次性让 AI 吐出一整份爬虫，表面很快，但一旦某个字段抓不到，就得在几十行代码里靠猜。
+
+实验环境：Python 3.14、PyCharm、`requests` + `beautifulsoup4` + `pandas`，AI 编程助手为网页版对话模型。
+
+目标站点选了 `books.toscrape.com`。这是一个公开的爬虫练习沙盒，页面纯静态、分页规则规整、明确允许练习抓取，不需要处理登录态、验证码和反爬对抗，适合把注意力放在工程流程本身。
+
+---
+
+## 一、需求澄清
+
+### 1. 结构化 Prompt
+
+```
+你是 Python 后端工程师。我需要编写一个静态网页爬虫。
+目标：抓取【目标网站 URL】的列表页，提取标题、时间、作者、链接。
+约束：使用 requests 和 BeautifulSoup；必须设置 User-Agent 伪装；
+请求间隔不低于 2 秒；遇到网络超时需重试 3 次。
+验收：输出 result.csv 文件，并在终端打印成功抓取条数。
+```
+
+四要素缺一不可：
+
+| 要素 | 内容 |
+|---|---|
+| 角色 | Python 后端工程师 |
+| 目标 | 抓取静态列表页，提取 4 个字段 |
+| 约束 | 技术栈固定、UA 伪装、间隔 ≥ 2 秒、超时重试 3 次 |
+| 验收 | 输出 CSV，终端打印条数 |
+
+### 2. 字段映射
+
+练习站点的数据结构与新闻列表不同，按"等效抽取"做映射：
+
+| 实验要求 | 本项目字段 | 取值位置 |
+|---|---|---|
+| 标题 | `title`（书名） | `h3 > a` 的 `title` 属性 |
+| 时间 | `price`（价格） | `p.price_color` 文本 |
+| 作者 | `rating`（星级） | `p.star-rating` 的 class 第二值 |
+| 链接 | `link` | `h3 > a` 的 `href` 经 `urljoin` 转绝对地址 |
+
+### 3. 明确不做的事
+
+不碰登录态、不做验证码识别、不用代理池、不做详情页二次抓取、不做并发加速（与"间隔 ≥ 2 秒"的约束目标冲突）。范围先划死，AI 才不会顺手加戏。
+
+---
+
+## 二、三段迭代过程
+
+### 阶段一：只请求，不解析
+
+Prompt 里明确写"现在只生成发送请求并获取 HTML 的代码，不要解析、不要写入 csv"。AI 返回的结构是：
+
+- `UA_POOL`：4 条不同浏览器 UA，`create_session()` 随机取一条
+- `_throttle()`：以 `time.monotonic()` 记录上次请求时刻，不足 2 秒就补足
+- `fetch_html()`：对 `Timeout`、`ConnectionError` 最多重试 3 次并递增退避；`HTTPError` 直接放弃
+- `fetch_list_pages()`：生成器逐页 `yield`，失败页返回 `None`
+
+```python
+def _throttle():
+    global _last_request_at
+    elapsed = time.monotonic() - _last_request_at
+    if elapsed < REQUEST_INTERVAL:
+        time.sleep(REQUEST_INTERVAL - elapsed)
+    _last_request_at = time.monotonic()
+```
+
+这一轮**实际跑挂了**：代码里直接用 `HTTPError`、`RequestException`，但没有从 `requests.exceptions` 导入，PyCharm 直接标红，运行必抛 `NameError`。追加一条"只补导入、不要新增功能"的 Prompt 修复后，5 页全部返回 `status=200`，请求层通过。
+
+> 这是三段迭代里唯一一次返工，也是最有价值的一次：AI 给的代码"看起来完整"，但连导入都没自查。
+
+### 阶段二：加解析，只打印前 3 条
+
+Prompt 约束"不要删除原有请求逻辑，不要写入 CSV，每页只打印前 3 条"。AI 新增 `parse_books()`，卡片定位用 `article.product_pod`，四个字段分别用 `select_one` 取，链接用 `urljoin` 拼绝对地址。
+
+```python
+for pod in soup.select("article.product_pod"):
+    a = pod.select_one("h3 > a")
+    title = a.get("title", "").strip() if a else ""
+    href = a.get("href", "") if a else ""
+    link = urljoin(base_url, href) if href else ""
+
+    price_el = pod.select_one("p.price_color")
+    price = price_el.get_text(strip=True) if price_el else ""
+
+    rating_el = pod.select_one("p.star-rating")
+    rating = ""
+    if rating_el:
+        classes = rating_el.get("class", [])
+        if len(classes) > 1:
+            rating = classes[1]
+```
+
+刻意要求"只打印前 3 条、不写文件"，是为了把"解析对不对"与"文件写没写对"两个问题隔离开。这一步跑通了，后面写盘出问题就只可能是写盘环节的原因。
+
+运行结果：3 页 × 20 条，每页打印 3 条，字段与页面人工比对一致，未生成任何文件。
+
+### 阶段三：加持久化，输出 CSV
+
+Prompt 要求"原有请求、解析代码全部保留，不要改动"，只新增 pandas 汇总与写盘：
+
+```python
+all_books = []
+for page, url, html in fetch_list_pages():
+    if html is None:
+        continue
+    books = parse_books(html, url)
+    all_books.extend(books)
+
+df = pd.DataFrame(all_books, columns=["title", "price", "rating", "link"])
+df.to_csv("result.csv", index=False, encoding="utf-8-sig")
+```
+
+两个参数是关键：`index=False` 去掉多余行号列，`utf-8-sig` 带 BOM，Excel 双击打开中文不乱码。运行后得到 61 行（表头 1 + 数据 60），列序与字段定义一致。
+
+---
+
+## 三、运行结果
+
+```
+[INFO] 请求成功 [1/3] http://books.toscrape.com/catalogue/page-1.html (status=200, len=51400)
+...
+===== 第 1 页（共 20 条），展示前 3 条 =====
+  [1] 书名: A Light in the Attic
+      价格: £51.77
+      星级: Three
+      链接: http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
+...
+共抓取图书：60 条
+已写入 result.csv（utf-8-sig），共 60 行
+```
+
+CSV 内容：
+
+```csv
+title,price,rating,link
+A Light in the Attic,£51.77,Three,http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
+Tipping the Velvet,£53.74,One,http://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html
+```
+
+---
+
+## 四、异常场景实测
+
+不只跑通顺流程，把异常也真跑了一遍：
+
+| 场景 | 构造方式 | 实测现象 | 结论 |
+|---|---|---|---|
+| 字段缺失 | 手写缺书名/价格的卡片 HTML | 缺失字段全部返回 `""`，未抛异常 | 通过 |
+| 无效域名 | `http://no-such-host-abc123.invalid/page.html` | 恰好重试 3 次，退避 2 秒、4 秒，最后返回 `None` | 通过 |
+| 页面 404 | `page-9999.html` | 只记一条 ERROR 直接放弃，未进入重试 | 通过 |
+| 编码 | 读 CSV 首字节 | `EF BB BF`，Excel 打开无乱码 | 通过 |
+| 全部失败 | 未构造 | 会写出仅含表头的空 CSV，不报错 | 风险，已知 |
+
+第三条值得说一句：重试只该作用于网络层的瞬时故障，404 是确定性错误，重试只会加重站点负担。AI 在这一点上的分支设计是对的。
+
+---
+
+## 五、复盘
+
+### 1. 人工审查抓到的问题
+
+1. 异常类未导入（阶段一直接跑挂）
+2. UA 随机池对同一会话的指纹并不稳定，但对练习站点无实际副作用，保留
+3. 价格带 `£`、星级是英文单词，本阶段按原始数据留存，未清洗
+4. 解析失败返回空列表、不抛异常 —— 会造成"抓取 0 条也像正常结束"的**静默失败**，目前靠"每页条数 + 总条数"两处输出人工发现
+
+### 2. 风险识别
+
+- **DOM 脆弱性**：四个选择器全部硬编码，站点改版即失效且不报错
+- **静默失败**：`all_books` 为空时仍写出空表 CSV
+- **编码推断**：`apparent_encoding` 基于内容猜测，多语言混排仍有误判可能
+- **合规边界**："2 秒间隔 + 受控页数"只是最低限度的礼貌策略，换成真实站点前需先看 `robots.txt` 与用户协议
+
+### 3. 静态方案与动态方案
+
+| 维度 | requests + BeautifulSoup | Playwright / Selenium |
+|---|---|---|
+| 适用页面 | 静态 HTML，数据在响应体里 | JS 渲染，数据由前端运行时生成 |
+| 实现复杂度 | 低，一个文件即可 | 高，浏览器安装、驱动版本、等待策略 |
+| 单页耗时 | 0.1–0.3 秒 | 1–3 秒 |
+| 内存占用 | 几十 MB | 数百 MB |
+| 维护成本 | 选择器一变即失效 | 同样依赖 DOM，还要维护等待与重试 |
+
+判断顺序应该是：先用 `Ctrl+U` 看源码里有没有目标数据，或用 `requests` 抓一次看响应体是否含关键词。数据在初始 HTML 里就用静态方案，只在确认由 JS 生成时才升级自动化，不要一上来就上浏览器。
+
+### 4. 待改进
+
+1. 加结构断言：解析后校验"每页条数 > 0"，否则记为失败页并告警
+2. 空数据显式提示：写盘前判断 `all_books` 为空
+3. 选择器外置成配置字典，站点改版只改配置
+4. 数据清洗：价格转 `float`、星级映射 1–5 分
+5. 日志落盘，保留每轮成功页数与失败页数
+
+---
+
+## 六、源码与文档
+
+- 源码仓库：[python-spider-lab](https://github.com/qls-study-blog/python-spider-lab)
+- 仓库内含：`fetcher.py`、`result.csv`、`README.md`，以及 `docs/` 下的需求澄清清单、AI 协作过程记录、测试用例、复盘四份文档
+
+### 一句话结论
+
+AI 在单点实现上效率很高，但异常导入、静默失败、字段语义这类问题只能靠人工审查加真实运行发现。工程上的差距不在"能不能写出来"，而在"出错时能不能被看见、被定位"。

@@ -19,6 +19,8 @@ layout: default
   - 在线演示：[校园地图与天气数据看板](https://campusdashboardmap-2fkcmvsprdpzxxvjumj7uy.streamlit.app/)
 - [Python 实验（三）：列表、元组、集合深度探究](./2026/11/05/python-lab3-list-tuple-set.html)
   - 源码仓库：[python-lab3-containers](https://github.com/qls-study-blog/python-lab3-containers)
+- [Vibe Coding 实操：静态网页爬虫（请求—解析—持久化三段迭代）](./2026/11/18/python-vibe-coding-spider-static.html)
+  - 源码仓库：[python-spider-lab](https://github.com/qls-study-blog/python-spider-lab)
 
 ## 📝 课堂日常作业
 
@@ -36,6 +38,7 @@ layout: default
 | 实验项目 | [fastapi-expense-tracker-lab1](https://github.com/qls-study-blog/fastapi-expense-tracker-lab1) | Lab1 FastAPI 记账接口 |
 | 实验项目 | [campus_dashboard_map](https://github.com/qls-study-blog/campus_dashboard_map) | Lab2 校园地图天气看板 |
 | 实验项目 | [python-lab3-containers](https://github.com/qls-study-blog/python-lab3-containers) | 实验三 列表元组集合 |
+| 实验项目 | [python-spider-lab](https://github.com/qls-study-blog/python-spider-lab) | Vibe Coding 静态网页爬虫 |
 | 课堂作业 | [python-homework](https://github.com/qls-study-blog/python-homework) | 全部课堂日常作业合集 |
 
 ## 关于
